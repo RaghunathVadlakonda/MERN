@@ -12,6 +12,9 @@ connectDB();
 
 const PORT = process.env.PORT;
 
+// body parser for allowed to data from body..
+app.use(express.json({extended:false}))
+
 app.get('/', (req, res) => {
     res.send("Home! This is sample.");
 });
