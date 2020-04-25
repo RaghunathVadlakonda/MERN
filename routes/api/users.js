@@ -73,8 +73,6 @@ async (req, res) => {
             res.json({ token})
         }
     );
-
-
     // res.send('User Registered');
     }catch(err) {
         console.error(err.message);
