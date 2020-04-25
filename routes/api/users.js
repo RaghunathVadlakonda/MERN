@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const config = require('config');
 const {check, validationResult} = require('express-validator');
 const User = require('../../models/User');
 
@@ -29,15 +31,17 @@ async (req, res) => {
     let user = await User.findOne({email});
 
     if(user) {
-        res.status(400).json({errors: [{msg:'User alredy exists'}]});
+        return res.status(400).json({errors: [{msg:'User alredy exists'}]});
     }
-    // 
+
+    // Gravatar 
     const avatar = gravatar.url(email, {
         s: '200',
         r: 'pg',
         d: 'mm'
     });
 
+    // Creating new object with instance.
     user = new User({
         name,
         email,
@@ -45,13 +49,33 @@ async (req, res) => {
         password
     });
 
+    // Encrypting the user password using bcrypt module. 
     const salt = await bcrypt.genSalt(10);
 
     user.password = await bcrypt.hash(password, salt);
 
     await user.save();
-    // console.log(req.body);
-    res.send('User Registered');
+
+    // JWT --> Header,Payload,Verify Signature this 3 combind in JWT Token.
+
+    const payload = {
+        user: {
+            id:user.id    
+        }
+    }
+
+    jwt.sign(
+        payload,
+        config.get('jwtToken'),
+        {expiresIn: 36000},
+        (err, token) => {
+            if(err) throw err;
+            res.json({ token})
+        }
+    );
+
+
+    // res.send('User Registered');
     }catch(err) {
         console.error(err.message);
         res.status(500).send('Server Error');
