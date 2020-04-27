@@ -109,11 +109,55 @@ router.post('/', [auth, [
         } catch(err) {
             console.error(err.message);
             res.status(500).send('Server Error');
+        }  
+});
+
+
+
+// @route           GET api/profile
+// @Description     Get the All Users profiles
+// @Access          Public route
+router.get('/', async(req, res) => {
+
+    try {
+        const profiles = await Profile.find().populate('user', ['name','avatar'])
+        
+        // If condition for checking the no profile.
+        if(!profiles) {
+            return res.status(400).json({msg: 'There is no profiles in the database.'});
         }
 
+        res.json(profiles);
+        res.send('Successfully got profiles.');
+    }catch(err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 
-        // res.send('Profile');
+// @route           GET api/profile/user/:user_id
+// @Description     Get the User profile based on user id
+// @Access          Public route
+router.get('/user/:user_id', async(req, res) => {
+
+    try {
+        const profile = await Profile.findOne({user: req.params.user_id}).populate('user', ['name','avatar'])
+        
+        // If condition for checking the no profile.
+        if(!profile) 
+            return res.status(400).json({msg: 'There is no profile with this details.'});
+        
+
+        res.json(profile);
+        // res.send('Successfully got profile.');
+    }catch(err) {
+        console.error(err.message);
+        if(err.name == 'CastError') {
+            return res.status(400).json({msg: 'There is no profile with this details.'});
+        }
+        res.status(500).send('Server Error');
+    }
 });
 
 
