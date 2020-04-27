@@ -9,7 +9,7 @@ const {check, validationResult} = require('express-validator');
 
 // @route           GET api/auth
 // @Description     Test route for auth
-// @Access          Public route
+// @Access          Private route
 router.get('/', auth, async (req, res) => {
     try{
         const user = await User.findById(req.user.id).select('-password');
@@ -19,7 +19,6 @@ router.get('/', auth, async (req, res) => {
         res.send('Server Error');
     }
 });
-
 
 
 // @route           POST api/auth
@@ -41,7 +40,7 @@ async (req, res) => {
 
 
     try {
-    // Handling User already exists...
+    // Checking user with email.
     let user = await User.findOne({email});
 
     if(!user) {
