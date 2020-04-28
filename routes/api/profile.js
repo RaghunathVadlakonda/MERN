@@ -5,6 +5,7 @@ const User = require('../../models/User');
 const auth = require('../../middleware/auth');
 const {check, validationResult} = require('express-validator');
 
+
 // @route           GET api/profile/me
 // @Description     Get the Users profile based on the users id
 // @Access          Private route
@@ -156,6 +157,32 @@ router.get('/user/:user_id', async(req, res) => {
         if(err.name == 'CastError') {
             return res.status(400).json({msg: 'There is no profile with this details.'});
         }
+        res.status(500).send('Server Error');
+    }
+});
+
+
+
+
+// @route           POST api/profile
+// @Description     Delete the User and Profile and Posts
+// @Access          Private route
+router.delete('/',auth, async(req, res) => {
+
+    try {
+
+        // Remove users posts
+
+
+        // Remove profile
+        await Profile.findOneAndRemove({user: req.user.id})
+
+        // Remove user
+        await User.findOneAndRemove({_id: req.user.id})
+    
+        res.json({msg: "Successfully Deleted"});
+    }catch(err) {
+        console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
