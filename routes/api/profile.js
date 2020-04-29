@@ -4,6 +4,8 @@ const Profile = require('../../models/Profile');
 const User = require('../../models/User');
 const auth = require('../../middleware/auth');
 const {check, validationResult} = require('express-validator');
+const request = require('request');
+const config = require('config');
 
 
 // @route           GET api/profile/me
@@ -185,6 +187,229 @@ router.delete('/',auth, async(req, res) => {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
+});
+
+
+
+// @route           PUT api/profile/experience
+// @Description     Updating the profile experiences.
+// @Access          Private route
+
+router.put('/experience', [auth, [
+
+    // checking the validations.
+    check('title', 'Title is required').not().isEmpty(),
+    check('company', 'Company is required').not().isEmpty(),
+    check('from', 'from Date is required').not().isEmpty()
+]], async (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        return res.status(400).json({errors: errors.array()});
+    }
+
+    const {
+        title,
+        company,
+        from,
+        to,
+        current,
+        location,
+        description
+    } = req.body;
+
+    const newExp = {
+        title,
+        company,
+        from,
+        to,
+        current,
+        location,
+        description
+    }
+
+    try {
+
+        const profile = await Profile.findOne({user: req.user.id})
+
+        if(!profile) {
+            return res.status(400).json({msg: 'Profile Not Found'})
+        }
+
+        profile.experience.unshift(newExp);
+        // console.log('check in put'+ profile.experience);
+        await profile.save();
+        res.json(profile);
+     
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json('Server Error');
+        
+    }
+    
+});
+    
+
+
+// @route           DELETE api/profile/experience/:exp_id
+// @Description     Deleting the selected experience from user profile.
+// @Access          Private route
+
+router.delete('/experience/:exp_id', auth, async(req, res) => {
+
+    try {
+
+        // GET profile with user id
+        const profile = await Profile.findOne({user: req.user.id});
+
+        // we are mapping for select correct experience from list
+        const removeIndex = profile.experience.map(item => item.id).indexOf(req.params.exp_id);
+
+        // remove experience
+        profile.experience.splice(removeIndex, 1);
+
+        // saving and sending profile response after deleting the experience
+        await profile.save();
+        res.json(profile);
+
+        
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json('Server Error');
+    }
+
+});
+
+
+
+
+
+// @route           PUT api/profile/education
+// @Description     Updating the profile education.
+// @Access          Private route
+
+router.put('/education', [auth, [
+
+    // checking the validations.
+    check('school', 'School is required').not().isEmpty(),
+    check('degree', 'Degree is required').not().isEmpty(),
+    check('fieldofstudy', 'Field of Study is required').not().isEmpty(),
+    check('from', 'from Date is required').not().isEmpty()
+]], async (req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        return res.status(400).json({errors: errors.array()});
+    }
+
+    const {
+        school,
+        degree,
+        from,
+        to,
+        current,
+        feildofstudy,
+        description
+    } = req.body;
+
+    const newExp = {
+        school,
+        degree,
+        from,
+        to,
+        current,
+        feildofstudy,
+        description
+    }
+
+    try {
+
+        const profile = await Profile.findOne({user: req.user.id})
+
+        if(!profile) {
+            return res.status(400).json({msg: 'Profile Not Found'})
+        }
+
+        profile.education.unshift(newEdu);
+        await profile.save();
+        res.json(profile);
+     
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json('Server Error');
+        
+    }
+    
+});
+    
+
+
+// @route           DELETE api/profile/education/:edu_id
+// @Description     Deleting the selected education from user profile.
+// @Access          Private route
+
+router.delete('/education/:edu_id', auth, async(req, res) => {
+
+    try {
+        // GET profile with user id
+        const profile = await Profile.findOne({user: req.user.id});
+
+        // we are mapping for select correct experience from list
+        const removeIndex = profile.education.map(item => item.id).indexOf(req.params.exp_id);
+
+        // remove experience
+        profile.education.splice(removeIndex, 1);
+
+        // saving and sending profile response after deleting the experience
+        await profile.save();
+        res.json(profile);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json('Server Error');
+    }
+
+});
+
+
+// @route           GET api/profile/github/:username
+// @Description     Getting the github repos based on the username.
+// @Access          Public route
+
+router.get('/github/:username', (req, res) => {
+
+    try {
+        const options = {
+            uri: `https://api.github.com/users/${
+                req.params.username}/repos?per_page=5&sort=created:ASC&
+                client_id=${config.get('githubClientId')}&
+                client_secret=${config.get('githubClientSecret')}`,
+                method: 'GET',
+                headers: {'user-agent':'node.js'}
+        }
+
+        request(options, (error, response, body) => {
+
+            // checking the Error.
+            if(error) {
+                console.error(error);
+            }
+
+            // checking the error in response.
+            if(response.statusCode !== 200) {
+                return res.status(404).json({msg: 'No github profile found.'})
+            }
+
+            // if everything fine then we will get data-body basically body is a string 
+            //     so, we are converting string into json format using JSON.parse
+            res.json(JSON.parse(body));
+
+        });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json('Server Error');
+    }
+
 });
 
 
