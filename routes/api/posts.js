@@ -105,7 +105,7 @@ router.delete('/:id', auth, async(req, res) => {
         }
 
         // Handling the error is not AUTHORIZED user.
-        if(post.user !== req.user.id) {
+        if(post.user.toString() !== req.user.id) {
             return res.status(401).json({msg: 'User Not Authorized.'});
         }
 
